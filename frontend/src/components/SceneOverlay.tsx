@@ -11,6 +11,7 @@ const JUMP_LABELS: { target: JumpTarget; label: string }[] = [
   { target: 'moon', label: 'Moon' },
   { target: 'mars', label: 'Mars' },
   { target: 'centroid', label: 'Centroid' },
+  { target: 'solar-system', label: 'Full View' },
 ];
 
 export function SceneOverlay({ autoOrbit, onToggleAutoOrbit, onJumpTo }: Props) {

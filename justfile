@@ -18,15 +18,15 @@ backend:
 
 # Install frontend dependencies
 install:
-    cd {{ root_dir }}/frontend && npm install
+    cd {{ root_dir }}/frontend; npm install
 
 # Run the Vite frontend dev server (port 5173) — requires backend running in another terminal
 frontend:
-    cd {{ root_dir }}/frontend && npm run dev
+    cd {{ root_dir }}/frontend; npm run dev
 
 # Build the frontend for production
 build-frontend:
-    cd {{ root_dir }}/frontend && npm run build
+    cd {{ root_dir }}/frontend; npm run build
 
 # Build the Docker image locally
 docker-build:

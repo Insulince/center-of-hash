@@ -6,13 +6,14 @@ import { Earth } from './Earth';
 import { CentroidPoint } from './CentroidPoint';
 import { EarthIndicator } from './EarthIndicator';
 import { MarsIndicator } from './MarsIndicator';
+import { MoonIndicator } from './MoonIndicator';
 import { LightLagSphere } from './LightLagSphere';
 import { MoonBody } from './MoonBody';
 import { MarsBody } from './MarsBody';
 import { EARTH_RADIUS, MOON_DISTANCE, MARS_DISTANCE } from '../lib/bodies';
 import type { Centroid } from '../types';
 
-export type JumpTarget = 'earth' | 'moon' | 'mars' | 'centroid';
+export type JumpTarget = 'earth' | 'moon' | 'mars' | 'centroid' | 'solar-system';
 
 // Pre-built destinations for static bodies
 const JUMP_PRESETS = {
@@ -29,6 +30,11 @@ const JUMP_PRESETS = {
     // Camera 30 Mm in front of Mars (toward Earth), orbiting Mars center
     position: new Vector3(0, 0, -MARS_DISTANCE + 30_000_000),
     target: new Vector3(0, 0, -MARS_DISTANCE),
+  },
+  'solar-system': {
+    // Elevated 150 Gm above the ecliptic, 300 Gm behind Earth — all bodies in frame.
+    position: new Vector3(0, 150_000_000_000, 300_000_000_000),
+    target: new Vector3(0, 0, -MARS_DISTANCE / 2),
   },
 };
 
@@ -111,7 +117,7 @@ function CameraRig({ autoOrbit, jumpTarget, centroid, onJumpComplete }: CameraRi
       enableDamping
       dampingFactor={0.05}
       minDistance={7_000_000}
-      maxDistance={280_000_000_000}
+      maxDistance={500_000_000_000}
       onStart={() => {
         if (isJumping.current) {
           isJumping.current = false;
@@ -145,6 +151,7 @@ export function Scene({ centroid, autoOrbit, jumpTarget, onJumpComplete }: Props
       <MarsBody />
       {centroid && <LightLagSphere centroid={centroid} />}
       <EarthIndicator />
+      <MoonIndicator />
       <MarsIndicator />
       {centroid && <CentroidPoint centroid={centroid} />}
       <CameraRig
