@@ -1,0 +1,17 @@
+.git
+.githooks
+.worktrees/
+.idea
+.junie
+.claude
+.github
+.dockerignore
+.gitignore
+docs
+Dockerfile
+justfile
+*.iml
+*.md
+
+frontend/node_modules
+frontend/dist

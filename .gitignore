@@ -1,0 +1,9 @@
+.idea
+.worktrees/
+.claude/
+.junie/
+docs/
+*.iml
+
+frontend/node_modules
+frontend/dist

@@ -1,0 +1,85 @@
+package centroid
+
+// countryCentroids maps ISO 3166-1 alpha-2 codes to [lat, lon] decimal degrees.
+// Covers countries representing ~99% of global Bitcoin hashrate as of 2024.
+// Approximate geographic centroids — sub-degree precision is unnecessary given
+// that CCAF collapses entire countries to a single data point.
+var countryCentroids = map[string][2]float64{
+	// Alpha-2 (primary — matches CCAF API response field "code")
+	"US": {37.09, -95.71},
+	"CN": {35.86, 104.19},
+	"KZ": {48.02, 66.92},
+	"RU": {61.52, 105.32},
+	"CA": {56.13, -106.35},
+	"IR": {32.43, 53.69},
+	"DE": {51.17, 10.45},
+	"MY": {4.21, 101.97},
+	"IE": {53.15, -7.69},
+	"IS": {64.96, -19.02},
+	"NO": {60.47, 8.47},
+	"GE": {41.99, 43.50},
+	"AU": {-25.27, 133.77},
+	"BR": {-14.24, -51.93},
+	"SE": {60.13, 18.64},
+	"FI": {61.92, 25.75},
+	"SG": {1.35, 103.82},
+	"AE": {23.42, 53.85},
+	"UA": {48.38, 31.17},
+	"PK": {30.38, 69.35},
+	"ET": {9.15, 40.49},
+	"AR": {-38.42, -63.62},
+	"CO": {4.57, -74.30},
+	"GB": {55.38, -3.44},
+	"NL": {52.13, 5.29},
+	"AT": {47.52, 14.55},
+	"CH": {46.82, 8.23},
+	"TH": {15.87, 100.99},
+	"VN": {14.06, 108.28},
+	"ID": {-0.79, 113.92},
+	"MX": {23.63, -102.55},
+	"NG": {9.08, 8.68},
+	"SA": {23.89, 45.08},
+	"KW": {29.31, 47.48},
+	"QA": {25.35, 51.18},
+	"KG": {41.20, 74.76},
+	"UZ": {41.38, 63.97},
+	"ZA": {-30.56, 22.94},
+	"PE": {-9.19, -75.02},
+	"IN": {20.59, 78.96},
+	"JP": {36.20, 138.25},
+	"KR": {35.91, 127.77},
+	"HK": {22.32, 114.17},
+	// Alpha-3 fallbacks (some data sources use 3-letter codes)
+	"USA": {37.09, -95.71},
+	"CHN": {35.86, 104.19},
+	"KAZ": {48.02, 66.92},
+	"RUS": {61.52, 105.32},
+	"CAN": {56.13, -106.35},
+	"IRN": {32.43, 53.69},
+	"DEU": {51.17, 10.45},
+	"MYS": {4.21, 101.97},
+	"IRL": {53.15, -7.69},
+	"ISL": {64.96, -19.02},
+	"NOR": {60.47, 8.47},
+	"GEO": {41.99, 43.50},
+	"AUS": {-25.27, 133.77},
+	"BRA": {-14.24, -51.93},
+	"SWE": {60.13, 18.64},
+	"FIN": {61.92, 25.75},
+	"SGP": {1.35, 103.82},
+	"ARE": {23.42, 53.85},
+	"UKR": {48.38, 31.17},
+	"PAK": {30.38, 69.35},
+	"ETH": {9.15, 40.49},
+	"ARG": {-38.42, -63.62},
+	"COL": {4.57, -74.30},
+	"GBR": {55.38, -3.44},
+	"NLD": {52.13, 5.29},
+}
+
+// CountryLatLon returns the centroid (latitude, longitude) for a country by
+// ISO 3166-1 alpha-2 or alpha-3 code. Returns (0, 0, false) if not found.
+func CountryLatLon(isoCode string) (lat, lon float64, ok bool) {
+	coords, ok := countryCentroids[isoCode]
+	return coords[0], coords[1], ok
+}

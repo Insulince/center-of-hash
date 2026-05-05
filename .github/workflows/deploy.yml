@@ -1,0 +1,56 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (OIDC)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/671353614733/locations/global/workloadIdentityPools/github-pool/providers/github"
+          service_account: "github-deploy-reus-now@reus-now.iam.gserviceaccount.com"
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCP
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build and push container
+        run: |
+          SHORT_SHA=${GITHUB_SHA::8}
+          IMAGE=us-central1-docker.pkg.dev/reus-now/center-of-hash/center-of-hash
+          docker build --platform linux/amd64 \
+            -t ${IMAGE}:${SHORT_SHA} \
+            -t ${IMAGE}:latest \
+            .
+          docker push ${IMAGE}:${SHORT_SHA}
+          docker push ${IMAGE}:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          SHORT_SHA=${GITHUB_SHA::8}
+          gcloud run deploy center-of-hash \
+            --image us-central1-docker.pkg.dev/reus-now/center-of-hash/center-of-hash:${SHORT_SHA} \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --port 8080
+
+      - name: Print service URL
+        run: |
+          gcloud run services describe center-of-hash \
+            --region us-central1 \
+            --format 'value(status.url)'
