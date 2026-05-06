@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.4.0 - 6 May 2026, 4:01 PM
+- **UI polish**: navigation overlay redesigned as a glass card (backdrop-blur) with colored body-dot indicators and the auto-orbit toggle folded into its header; eliminated duplicate "Hashrate Distribution" section title (country panel renamed "Mining by Country"); "What is this?" info block condensed; sidebar gap tightened
+- **Mobile layout**: sidebar hidden on small screens; full-screen canvas on mobile with a floating "☰ Data" FAB that opens an iOS-style bottom sheet (slide-up drawer, backdrop dismiss, drag handle) containing all data and controls; header subtitle and external link hidden on mobile; footer padding and hint text compressed to reclaim vertical space; touch targets enlarged in the navigation overlay
+
 ### v0.3.0 - 6 May 2026
 - **Simulation date controls**: play/pause/rewind scrubber with six speeds (1d/s → 100yr/s); date range extended to 200 CE–4999 CE
 - **Sun visual overhaul**: six additive-blending corona shells give a convincing star glow without post-processing; solar disc at emissiveIntensity 12

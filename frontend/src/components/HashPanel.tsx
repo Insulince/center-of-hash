@@ -10,7 +10,7 @@ export function HashPanel({ shares }: Props) {
 
   return (
     <div className="flex flex-col gap-1">
-      <h3 className="text-xs uppercase tracking-widest text-slate-400 mb-2">Hashrate Distribution</h3>
+      <h3 className="text-xs uppercase tracking-widest text-slate-400 mb-2">Mining by Country</h3>
       {sorted.map((c) => {
         const pct = ((c.share / total) * 100).toFixed(1);
         return (

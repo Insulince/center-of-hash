@@ -113,7 +113,7 @@ export function SimDateControls({ value, onChange }: Props) {
         </select>
       </div>
 
-      <p className="text-xs text-slate-600 leading-tight">
+      <p className="hidden md:block text-xs text-slate-600 leading-tight">
         2018-07-31: Mars opposition (~58 Gm, inside sphere) · 2019-09-02: ~370 Gm, outside
       </p>
     </div>

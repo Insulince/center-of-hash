@@ -14,10 +14,13 @@ export function TimeSlider({ snapshots, selectedIndex, onChange }: Props) {
   const label = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between text-xs text-slate-400 font-mono">
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-400">Historical Snapshot</span>
+        <span className="text-xs tabular-nums text-slate-300">{label}</span>
+      </div>
+      <div className="hidden md:flex justify-between text-xs text-slate-600 font-mono">
         <span>{new Date(snapshots[0].date).getFullYear()}</span>
-        <span className="text-white font-semibold">{label}</span>
         <span>{new Date(snapshots[snapshots.length - 1].date).getFullYear()}</span>
       </div>
       <input
