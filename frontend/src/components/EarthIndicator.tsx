@@ -32,7 +32,7 @@ export function EarthIndicator() {
     // renderOrder + depthTest:false keeps the indicator visible in front of all scene geometry.
     // opacity starts at 0, so it's invisible near Earth even though it renders on top.
     <group ref={groupRef} renderOrder={10}>
-      <mesh>
+      <mesh frustumCulled={false}>
         <sphereGeometry args={[1, 16, 16]} />
         <meshBasicMaterial
           ref={matRef}

@@ -1,7 +1,7 @@
 import { useRef, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
-import { Vector3 } from 'three';
+import { PerspectiveCamera, Vector3 } from 'three';
 import { Earth } from './Earth';
 import { CentroidPoint } from './CentroidPoint';
 import { EarthIndicator } from './EarthIndicator';
@@ -11,6 +11,7 @@ import { LightLagSphere } from './LightLagSphere';
 import { MoonBody } from './MoonBody';
 import { MarsBody } from './MarsBody';
 import { EARTH_RADIUS, MOON_DISTANCE, MARS_DISTANCE } from '../lib/bodies';
+import { computeScale, type ScaleInfo } from './ScaleBar';
 import type { Centroid } from '../types';
 
 export type JumpTarget = 'earth' | 'moon' | 'mars' | 'centroid' | 'solar-system';
@@ -43,18 +44,45 @@ interface CameraRigProps {
   jumpTarget: JumpTarget | null;
   centroid: Centroid | null;
   onJumpComplete: () => void;
+  onScaleChange: (info: ScaleInfo) => void;
 }
 
-function CameraRig({ autoOrbit, jumpTarget, centroid, onJumpComplete }: CameraRigProps) {
-  const controlsRef = useRef<any>(null);
-  const { camera } = useThree();
+// Speed base: 20% of distance-to-target per second feels right across all zoom levels.
+const WASD_SPEED_FACTOR = 0.2;
+const WASD_SHIFT_MULTIPLIER = 10;
+const WASD_CTRL_MULTIPLIER = 0.1;
 
+function CameraRig({ autoOrbit, jumpTarget, centroid, onJumpComplete, onScaleChange }: CameraRigProps) {
+  const controlsRef = useRef<any>(null);
+  const { camera, size } = useThree();
   const isJumping = useRef(false);
   const destPos = useRef(new Vector3());
   const destTarget = useRef(new Vector3());
   // Keep callback fresh without putting it in deps
   const onDoneRef = useRef(onJumpComplete);
   onDoneRef.current = onJumpComplete;
+
+  // Track currently held keys without triggering re-renders.
+  const keys = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Don't hijack keys when user is typing in an input.
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      // Prevent page scroll on arrow keys.
+      if (e.key.startsWith('Arrow')) e.preventDefault();
+      keys.current.add(e.key.toLowerCase());
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      keys.current.delete(e.key.toLowerCase());
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, []);
 
   useEffect(() => {
     if (!jumpTarget) return;
@@ -92,6 +120,65 @@ function CameraRig({ autoOrbit, jumpTarget, centroid, onJumpComplete }: CameraRi
 
     // Drive autoRotate directly on the controls instance to avoid React re-renders
     controlsRef.current.autoRotate = autoOrbit && !isJumping.current;
+
+    // Scale bar ——————————————————————————————————————————————————————————————
+    if (camera instanceof PerspectiveCamera) {
+      const distToTarget = camera.position.distanceTo(controlsRef.current.target);
+      const tanHalfFov = Math.tan((camera.fov * Math.PI) / 360); // tan(fov/2 in rad)
+      const metersPerPixel = (2 * distToTarget * tanHalfFov) / size.height;
+      const info = computeScale(metersPerPixel);
+      if (info) onScaleChange(info);
+    }
+    // ————————————————————————————————————————————————————————————————————————
+
+    // WASD / arrow key free movement —————————————————————————————————————————
+    const k = keys.current;
+    const movingForward  = k.has('w') || k.has('arrowup');
+    const movingBack     = k.has('s') || k.has('arrowdown');
+    const movingLeft     = k.has('a') || k.has('arrowleft');
+    const movingRight    = k.has('d') || k.has('arrowright');
+    const movingUp       = k.has('q');
+    const movingDown     = k.has('e');
+
+    if (movingForward || movingBack || movingLeft || movingRight || movingUp || movingDown) {
+      // Cancel any in-progress jump — user is taking manual control.
+      if (isJumping.current) {
+        isJumping.current = false;
+        onDoneRef.current();
+      }
+
+      // Build move direction in camera-local space then transform to world space.
+      const forward = new Vector3();
+      camera.getWorldDirection(forward); // unit vector toward look target
+
+      const right = new Vector3();
+      right.crossVectors(forward, camera.up).normalize();
+
+      const up = new Vector3(0, 1, 0); // world Y — "up/down" in scene space
+
+      const moveDir = new Vector3();
+      if (movingForward) moveDir.add(forward);
+      if (movingBack)    moveDir.sub(forward);
+      if (movingLeft)    moveDir.sub(right);
+      if (movingRight)   moveDir.add(right);
+      if (movingUp)      moveDir.add(up);
+      if (movingDown)    moveDir.sub(up);
+      moveDir.normalize();
+
+      // Speed is proportional to distance from orbit target so movement feels
+      // consistent whether you're hovering over Earth or viewing from Mars.
+      const dist = camera.position.distanceTo(controlsRef.current.target);
+      let speed = dist * WASD_SPEED_FACTOR;
+      if (k.has('shift'))   speed *= WASD_SHIFT_MULTIPLIER;
+      if (k.has('control')) speed *= WASD_CTRL_MULTIPLIER;
+
+      const displacement = moveDir.multiplyScalar(speed * delta);
+      // Translate both camera AND orbit target so OrbitControls doesn't fight back.
+      camera.position.add(displacement);
+      controlsRef.current.target.add(displacement);
+      controlsRef.current.update();
+    }
+    // ————————————————————————————————————————————————————————————————————————
 
     if (!isJumping.current) return;
 
@@ -133,12 +220,13 @@ interface Props {
   autoOrbit: boolean;
   jumpTarget: JumpTarget | null;
   onJumpComplete: () => void;
+  onScaleChange: (info: ScaleInfo) => void;
 }
 
-export function Scene({ centroid, autoOrbit, jumpTarget, onJumpComplete }: Props) {
+export function Scene({ centroid, autoOrbit, jumpTarget, onJumpComplete, onScaleChange }: Props) {
   return (
     <Canvas
-      camera={{ position: [0, 0, 20_000_000], fov: 45, near: 1_000, far: 500_000_000_000 }}
+      camera={{ position: [0, 0, 20_000_000], fov: 45, near: 1_000, far: 2_000_000_000_000 }}
       gl={{ logarithmicDepthBuffer: true }}
     >
       <color attach="background" args={['#000000']} />
@@ -159,6 +247,7 @@ export function Scene({ centroid, autoOrbit, jumpTarget, onJumpComplete }: Props
         jumpTarget={jumpTarget}
         centroid={centroid}
         onJumpComplete={onJumpComplete}
+        onScaleChange={onScaleChange}
       />
     </Canvas>
   );

@@ -55,7 +55,7 @@ export function LightLagSphere({ centroid }: Props) {
   return (
     <mesh
       position={[centroid.x, centroid.z, -centroid.y]}
-      renderOrder={1}
+      renderOrder={-1}
     >
       <sphereGeometry args={[LIGHT_LAG_RADIUS, 64, 32]} />
       <shaderMaterial

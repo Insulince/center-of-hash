@@ -31,7 +31,7 @@ export function MoonIndicator() {
 
   return (
     <group ref={groupRef} position={MOON_POSITION} renderOrder={10}>
-      <mesh>
+      <mesh frustumCulled={false}>
         <sphereGeometry args={[1, 16, 16]} />
         <meshBasicMaterial
           ref={matRef}

@@ -33,7 +33,7 @@ export function MarsIndicator() {
 
   return (
     <group ref={groupRef} position={MARS_POSITION} renderOrder={10}>
-      <mesh>
+      <mesh frustumCulled={false}>
         <sphereGeometry args={[1, 16, 16]} />
         <meshBasicMaterial
           ref={matRef}

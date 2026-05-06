@@ -33,7 +33,7 @@ export function CentroidPoint({ centroid, color = '#f97316' }: Props) {
   return (
     // renderOrder=20 ensures centroid renders after all indicators (Earth=10, Mars=10)
     <group ref={groupRef} position={[centroid.x, centroid.z, -centroid.y]} renderOrder={20}>
-      <mesh>
+      <mesh frustumCulled={false}>
         <sphereGeometry args={[1, 16, 16]} />
         <meshStandardMaterial
           color={color}

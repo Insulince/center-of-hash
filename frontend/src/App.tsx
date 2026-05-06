@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Scene, type JumpTarget } from './components/Scene';
 import { SceneOverlay } from './components/SceneOverlay';
 import { TimeSlider } from './components/TimeSlider';
 import { HashPanel } from './components/HashPanel';
 import { HypotheticalMiner, type HypotheticalMinerConfig } from './components/HypotheticalMiner';
+import { ScaleBar, type ScaleBarHandle, type ScaleInfo } from './components/ScaleBar';
 import { useSnapshots } from './hooks/useSnapshots';
 import { latLonToECEF } from './lib/ecef';
 import { weightedCentroid, type Miner } from './lib/centroid';
@@ -16,6 +17,9 @@ export default function App() {
   const [hypothetical, setHypothetical] = useState<HypotheticalMinerConfig | null>(null);
   const [autoOrbit, setAutoOrbit] = useState(false);
   const [jumpTarget, setJumpTarget] = useState<JumpTarget | null>(null);
+  const scaleBarRef = useRef<ScaleBarHandle>(null);
+  // Stable callback: mutates the DOM ref directly, never triggers a React re-render.
+  const handleScaleChange = useCallback((info: ScaleInfo) => scaleBarRef.current?.update(info), []);
 
   useEffect(() => {
     if (snapshots.length > 0) setSelectedIndex(snapshots.length - 1);
@@ -69,12 +73,16 @@ export default function App() {
             </div>
           )}
           {!loading && !error && (
-            <Scene
-              centroid={effectiveCentroid}
-              autoOrbit={autoOrbit}
-              jumpTarget={jumpTarget}
-              onJumpComplete={() => setJumpTarget(null)}
-            />
+            <>
+              <Scene
+                centroid={effectiveCentroid}
+                autoOrbit={autoOrbit}
+                jumpTarget={jumpTarget}
+                onJumpComplete={() => setJumpTarget(null)}
+                onScaleChange={handleScaleChange}
+              />
+              <ScaleBar ref={scaleBarRef} />
+            </>
           )}
           {!loading && !error && (
             <SceneOverlay

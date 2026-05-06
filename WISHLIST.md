@@ -3,7 +3,7 @@
 
 ## New Features
 - Make it so you can enter the hypothetical share of hash rate as both a percentage or as a nominal value.
-- WASD and Arrow movement of the camera, with Shift to speed up and Ctrl to slow down. Q and E make vertical movement.
+- ~~WASD and Arrow movement of the camera, with Shift to speed up and Ctrl to slow down. Q and E make vertical movement.~~ ✓ Done
 - Add the sun and generate lighting from it as a source.
 - Realistic positioning? I don't want to get into orbital simulation and dynamics. However, Mars's distance from the earth varies to such a degree that it is actually illustrative to see how at its closest point it enters the light-lag-sphere, and at its furthest point it's well out of it. This may be sim-able with just a rudimentary "position the Mars around the sun in a circular/elliptical orbit that suitably captures the distance disparity over time without necessarily being representative of Mars's actual orbit". However, we also need to think about earth's orbit as well. And damn, the moon too? It gets complicated. Even with simulated orbits.
   - As an additional note, if we do implement this, it needs time-control features and auto-animate features. You should be able to advance time, reverse time, pause time, and let it play out at a user-set speed. Al lthe planets, indicators, light lag sphere, centroid, etc. would all update in real time.
