@@ -47,14 +47,13 @@ const fragmentShader = /* glsl */ `
 `;
 
 interface Props {
-  centroid: Centroid;
+  centroid: Centroid; // heliocentric Three.js world space
 }
 
 export function LightLagSphere({ centroid }: Props) {
-  // ECEF → Three.js axis mapping: three.x=ecef.x, three.y=ecef.z, three.z=-ecef.y
   return (
     <mesh
-      position={[centroid.x, centroid.z, -centroid.y]}
+      position={[centroid.x, centroid.y, centroid.z]}
       renderOrder={-1}
     >
       <sphereGeometry args={[LIGHT_LAG_RADIUS, 64, 32]} />

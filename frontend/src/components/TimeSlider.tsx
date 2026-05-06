@@ -26,7 +26,8 @@ export function TimeSlider({ snapshots, selectedIndex, onChange }: Props) {
         max={snapshots.length - 1}
         value={selectedIndex}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-orange-500 cursor-pointer"
+        className="w-full"
+        style={{ '--thumb-color': '#f97316' } as React.CSSProperties}
       />
     </div>
   );

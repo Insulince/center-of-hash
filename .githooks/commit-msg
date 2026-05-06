@@ -3,18 +3,52 @@
 COMMIT_MSG_FILE="$1"
 COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
 
-# Check if both VERSION.md and CHANGELOG.md were modified
-if git diff --cached --name-only | grep -q "^VERSION.md$" && \
-   git diff --cached --name-only | grep -q "^CHANGELOG.md$"; then
-    echo "✅ Both VERSION.md and CHANGELOG.md were updated. Proceeding with commit."
-    exit 0
-fi
-
-# Allow bypassing with --no-verify or commit message flag
+# Allow bypassing with [skip-hooks] in commit message
 if echo "$COMMIT_MSG" | grep -q "\[skip-hooks\]"; then
-    echo "⚠️ Skipping version check due to [skip-version-check] in commit message."
+    echo "⚠️  Skipping version check due to [skip-hooks] in commit message."
     exit 0
 fi
 
-echo "❌ | ERROR: You must update both VERSION.md and CHANGELOG.md before committing."
-exit 1
+STAGED=$(git diff --cached --name-only)
+
+# Require CHANGELOG.md to be staged
+if ! echo "$STAGED" | grep -q "^CHANGELOG.md$"; then
+    echo "❌ ERROR: CHANGELOG.md must be updated and staged before committing."
+    exit 1
+fi
+
+# Require VERSION.md to be staged
+if ! echo "$STAGED" | grep -q "^VERSION.md$"; then
+    echo "❌ ERROR: VERSION.md must be updated and staged before committing."
+    exit 1
+fi
+
+# Require frontend/package.json to be staged
+if ! echo "$STAGED" | grep -q "^frontend/package.json$"; then
+    echo "❌ ERROR: frontend/package.json must be updated and staged before committing."
+    exit 1
+fi
+
+# Extract the top version from CHANGELOG.md (e.g. "v0.3.0" from "### v0.3.0 - ...")
+CHANGELOG_VERSION=$(grep -m1 "^### v" CHANGELOG.md | sed 's/^### \(v[0-9][0-9.]*\).*/\1/')
+
+# Extract version from package.json and prepend "v" for comparison
+PKG_VERSION="v$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' frontend/package.json | head -1)"
+
+if [ -z "$CHANGELOG_VERSION" ]; then
+    echo "❌ ERROR: Could not parse a version from CHANGELOG.md."
+    exit 1
+fi
+
+if [ -z "$PKG_VERSION" ] || [ "$PKG_VERSION" = "v" ]; then
+    echo "❌ ERROR: Could not parse a version from frontend/package.json."
+    exit 1
+fi
+
+if [ "$PKG_VERSION" != "$CHANGELOG_VERSION" ]; then
+    echo "❌ ERROR: frontend/package.json version ($PKG_VERSION) does not match CHANGELOG.md ($CHANGELOG_VERSION)."
+    exit 1
+fi
+
+echo "✅ CHANGELOG.md and frontend/package.json both updated and versions match ($CHANGELOG_VERSION). Proceeding."
+exit 0

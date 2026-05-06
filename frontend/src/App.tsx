@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Scene, type JumpTarget } from './components/Scene';
-import { SceneOverlay } from './components/SceneOverlay';
+import { SceneOverlay, type AnchorTarget } from './components/SceneOverlay';
 import { TimeSlider } from './components/TimeSlider';
 import { HashPanel } from './components/HashPanel';
-import { HypotheticalMiner, type HypotheticalMinerConfig } from './components/HypotheticalMiner';
+import { SpaceMiners, type SpaceMinersConfig, DEFAULT_SPACE_MINERS } from './components/HypotheticalMiner';
 import { ScaleBar, type ScaleBarHandle, type ScaleInfo } from './components/ScaleBar';
+import { SimDateControls } from './components/SimDateControls';
 import { useSnapshots } from './hooks/useSnapshots';
+import { usePlanetaryPositions } from './hooks/usePlanetaryPositions';
 import { latLonToECEF } from './lib/ecef';
 import { weightedCentroid, type Miner } from './lib/centroid';
 import { countryLatLon } from './lib/countries';
@@ -14,9 +16,12 @@ import './index.css';
 export default function App() {
   const { snapshots, loading, error } = useSnapshots();
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [hypothetical, setHypothetical] = useState<HypotheticalMinerConfig | null>(null);
+  const [spaceMiners, setSpaceMiners] = useState<SpaceMinersConfig>(DEFAULT_SPACE_MINERS);
   const [autoOrbit, setAutoOrbit] = useState(false);
   const [jumpTarget, setJumpTarget] = useState<JumpTarget | null>(null);
+  const [anchorTarget, setAnchorTarget] = useState<AnchorTarget | null>(null);
+  const [simDate, setSimDate] = useState<Date>(() => new Date());
+  const positions = usePlanetaryPositions(simDate);
   const scaleBarRef = useRef<ScaleBarHandle>(null);
   // Stable callback: mutates the DOM ref directly, never triggers a React re-render.
   const handleScaleChange = useCallback((info: ScaleInfo) => scaleBarRef.current?.update(info), []);
@@ -29,17 +34,37 @@ export default function App() {
 
   const effectiveCentroid = (() => {
     if (!snap) return null;
-    if (!hypothetical) return snap.centroid;
 
-    const scale = 1 - hypothetical.hashrateFraction;
+    const { earth, mars, moon, sun } = positions;
+
+    // Convert ECEF (Earth-centered, meters) to heliocentric Three.js space.
+    // ECEF → Three.js axis: three.x=ecef.x, three.y=ecef.z, three.z=-ecef.y
+    const ecefToWorld = (ex: number, ey: number, ez: number): [number, number, number] =>
+      [earth.x + ex, earth.y + ez, earth.z - ey];
+
+    // Fast path: earth has all the weight, use pre-computed API centroid.
+    if (spaceMiners.earth === 1) {
+      const [wx, wy, wz] = ecefToWorld(snap.centroid.x, snap.centroid.y, snap.centroid.z);
+      return { x: wx, y: wy, z: wz };
+    }
+
+    // All Earth-based miners: convert ECEF → heliocentric Three.js, scaled by earth's share.
     const miners: Miner[] = snap.shares.flatMap((s) => {
       const coords = countryLatLon(s.country);
       if (!coords) return [];
-      const [x, y, z] = latLonToECEF(coords[0], coords[1]);
-      return [{ x, y, z, weight: s.share * scale }];
+      const [ex, ey, ez] = latLonToECEF(coords[0], coords[1]);
+      const [wx, wy, wz] = ecefToWorld(ex, ey, ez);
+      return [{ x: wx, y: wy, z: wz, weight: s.share * spaceMiners.earth }];
     });
-    const [hx, hy, hz] = hypothetical.ecef ?? latLonToECEF(hypothetical.lat, hypothetical.lon);
-    miners.push({ x: hx, y: hy, z: hz, weight: hypothetical.hashrateFraction });
+
+    // Off-Earth miners: live ephemeris positions, weighted by their fractions.
+    if (spaceMiners.moon > 0)
+      miners.push({ x: moon.x, y: moon.y, z: moon.z, weight: spaceMiners.moon });
+    if (spaceMiners.mars > 0)
+      miners.push({ x: mars.x, y: mars.y, z: mars.z, weight: spaceMiners.mars });
+    if (spaceMiners.sun > 0)
+      miners.push({ x: sun.x, y: sun.y, z: sun.z, weight: spaceMiners.sun });
+
     return weightedCentroid(miners);
   })();
 
@@ -80,6 +105,8 @@ export default function App() {
                 jumpTarget={jumpTarget}
                 onJumpComplete={() => setJumpTarget(null)}
                 onScaleChange={handleScaleChange}
+                positions={positions}
+                anchorBody={anchorTarget}
               />
               <ScaleBar ref={scaleBarRef} />
             </>
@@ -89,13 +116,16 @@ export default function App() {
               autoOrbit={autoOrbit}
               onToggleAutoOrbit={() => setAutoOrbit((v) => !v)}
               onJumpTo={(t) => setJumpTarget(t)}
+              anchorTarget={anchorTarget}
+              onAnchor={setAnchorTarget}
             />
           )}
         </div>
 
         <aside className="w-72 border-l border-slate-800 p-4 flex flex-col gap-6 overflow-y-auto">
           {snap && <HashPanel shares={snap.shares} />}
-          <HypotheticalMiner value={hypothetical} onChange={setHypothetical} />
+          <SpaceMiners value={spaceMiners} onChange={setSpaceMiners} />
+
           <div className="text-xs text-slate-500 leading-relaxed">
             <p className="font-semibold text-slate-400 mb-1">What is this?</p>
             <p>
@@ -125,7 +155,8 @@ export default function App() {
         </aside>
       </div>
 
-      <footer className="border-t border-slate-800 px-6 py-3">
+      <footer className="border-t border-slate-800 px-6 py-3 flex flex-col gap-3">
+        <SimDateControls value={simDate} onChange={setSimDate} />
         <TimeSlider
           snapshots={snapshots}
           selectedIndex={selectedIndex}

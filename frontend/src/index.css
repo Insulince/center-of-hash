@@ -11,3 +11,41 @@ body {
   color: #f8fafc;
   font-family: system-ui, -apple-system, sans-serif;
 }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 14px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: #334155;
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--thumb-color, #94a3b8);
+  margin-top: -5px;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #334155;
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--thumb-color, #94a3b8);
+  border: none;
+}

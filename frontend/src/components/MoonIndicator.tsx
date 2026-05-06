@@ -2,23 +2,24 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import type { Group, MeshStandardMaterial } from 'three';
-import { MOON_POSITION } from '../lib/bodies';
 
 // Indicator fades OUT when close to Moon (sphere is visible) and IN when far away.
 const FADE_NEAR = 5_000_000;   // 5 Mm: within this, Moon sphere is clearly visible
 const FADE_FAR  = 50_000_000;  // 50 Mm: beyond this, indicator fully visible
 const ANGULAR_SIZE = 0.008;
 
-const MOON_VEC = new Vector3(MOON_POSITION[0], MOON_POSITION[1], MOON_POSITION[2]);
+interface Props { position: Vector3 }
 
-export function MoonIndicator() {
+export function MoonIndicator({ position }: Props) {
   const groupRef = useRef<Group>(null);
   const matRef = useRef<MeshStandardMaterial>(null);
+  const posRef = useRef(position);
+  posRef.current = position;
 
   useFrame(({ camera, clock }) => {
     if (!groupRef.current || !matRef.current) return;
 
-    const dist = camera.position.distanceTo(MOON_VEC);
+    const dist = camera.position.distanceTo(posRef.current);
     const t = (dist - FADE_NEAR) / (FADE_FAR - FADE_NEAR);
     matRef.current.emissiveIntensity = Math.max(0, Math.min(1, t));
 
@@ -28,7 +29,7 @@ export function MoonIndicator() {
   });
 
   return (
-    <group ref={groupRef} position={MOON_POSITION} renderOrder={10}>
+    <group ref={groupRef} position={[position.x, position.y, position.z]} renderOrder={10}>
       <mesh frustumCulled={false}>
         <sphereGeometry args={[1, 16, 16]} />
         <meshStandardMaterial

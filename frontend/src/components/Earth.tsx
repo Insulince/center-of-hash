@@ -1,12 +1,14 @@
 import { useLoader } from '@react-three/fiber';
-import { TextureLoader } from 'three';
+import { TextureLoader, Vector3 } from 'three';
 
 const EARTH_RADIUS = 6_371_000;
 
-export function Earth() {
+interface Props { position: Vector3 }
+
+export function Earth({ position }: Props) {
   const texture = useLoader(TextureLoader, '/earth.jpg');
   return (
-    <mesh>
+    <mesh position={[position.x, position.y, position.z]}>
       <sphereGeometry args={[EARTH_RADIUS, 64, 64]} />
       <meshPhongMaterial map={texture} transparent opacity={0.88} />
     </mesh>
