@@ -1,5 +1,8 @@
 # CHANGELOG
 
+### v0.2.0 - 5 May 2026
+- Add Sun: to-scale solar disc with corona glow, Sun-driven directional lighting (replaces fake point light), "Sun" jump target, and redesigned Full View showing top-down ecliptic perspective including the Sun
+
 ### v0.1.2 - 5 May 2026, 11:00 PM
 - WASD and arrow-key camera movement with Shift (10×) and Ctrl (0.1×) speed modifiers; Q/E for vertical movement
 - Add camera WASD controls, scale bar, and frustum culling fixes

@@ -10,6 +10,7 @@ const JUMP_LABELS: { target: JumpTarget; label: string }[] = [
   { target: 'earth', label: 'Earth' },
   { target: 'moon', label: 'Moon' },
   { target: 'mars', label: 'Mars' },
+  { target: 'sun', label: 'Sun' },
   { target: 'centroid', label: 'Centroid' },
   { target: 'solar-system', label: 'Full View' },
 ];

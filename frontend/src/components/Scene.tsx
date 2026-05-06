@@ -10,11 +10,12 @@ import { MoonIndicator } from './MoonIndicator';
 import { LightLagSphere } from './LightLagSphere';
 import { MoonBody } from './MoonBody';
 import { MarsBody } from './MarsBody';
-import { EARTH_RADIUS, MOON_DISTANCE, MARS_DISTANCE } from '../lib/bodies';
+import { SunBody } from './SunBody';
+import { EARTH_RADIUS, MOON_DISTANCE, MARS_DISTANCE, SUN_DISTANCE, SUN_RADIUS, SUN_POSITION } from '../lib/bodies';
 import { computeScale, type ScaleInfo } from './ScaleBar';
 import type { Centroid } from '../types';
 
-export type JumpTarget = 'earth' | 'moon' | 'mars' | 'centroid' | 'solar-system';
+export type JumpTarget = 'earth' | 'moon' | 'mars' | 'sun' | 'centroid' | 'solar-system';
 
 // Pre-built destinations for static bodies
 const JUMP_PRESETS = {
@@ -32,10 +33,16 @@ const JUMP_PRESETS = {
     position: new Vector3(0, 0, -MARS_DISTANCE + 30_000_000),
     target: new Vector3(0, 0, -MARS_DISTANCE),
   },
+  sun: {
+    // Camera 5 solar radii from Sun center — disc fills ~half the FOV
+    position: new Vector3(0, 0, SUN_DISTANCE + 5 * SUN_RADIUS),
+    target: new Vector3(...SUN_POSITION),
+  },
   'solar-system': {
-    // Elevated 150 Gm above the ecliptic, 300 Gm behind Earth — all bodies in frame.
-    position: new Vector3(0, 150_000_000_000, 300_000_000_000),
-    target: new Vector3(0, 0, -MARS_DISTANCE / 2),
+    // Top-down ecliptic view from +Y: Sun (+Z at 149.6 Gm) and Mars (-Z at 225 Gm) both within FOV=45.
+    // Center target splits the Sun-Mars Z range; camera height chosen so each body sits at ~19° from axis.
+    position: new Vector3(0, 550_000_000_000, 50_000_000_000),
+    target: new Vector3(0, 0, (SUN_DISTANCE - MARS_DISTANCE) / 2),
   },
 };
 
@@ -204,7 +211,7 @@ function CameraRig({ autoOrbit, jumpTarget, centroid, onJumpComplete, onScaleCha
       enableDamping
       dampingFactor={0.05}
       minDistance={7_000_000}
-      maxDistance={500_000_000_000}
+      maxDistance={2_000_000_000_000}
       onStart={() => {
         if (isJumping.current) {
           isJumping.current = false;
@@ -226,14 +233,17 @@ interface Props {
 export function Scene({ centroid, autoOrbit, jumpTarget, onJumpComplete, onScaleChange }: Props) {
   return (
     <Canvas
-      camera={{ position: [0, 0, 20_000_000], fov: 45, near: 1_000, far: 2_000_000_000_000 }}
+      camera={{ position: [0, 0, 20_000_000], fov: 45, near: 1_000, far: 5_000_000_000_000 }}
       gl={{ logarithmicDepthBuffer: true }}
     >
       <color attach="background" args={['#000000']} />
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[15_000_000, 10_000_000, 5_000_000]} intensity={2.0} />
-      {/* Stars span well beyond Mars so they surround the viewer at any jump destination */}
-      <Stars radius={300_000_000_000} depth={50_000_000_000} count={5000} factor={4} />
+      {/* Low ambient so night sides are dark but not pitch black */}
+      <ambientLight intensity={0.1} />
+      {/* Directional light from the Sun — parallel rays illuminate all planets uniformly */}
+      <directionalLight position={SUN_POSITION} intensity={2.5} color="#fff8e7" />
+      {/* Stars radius 1.5 Tm keeps them in background even at solar-system view distance */}
+      <Stars radius={1_500_000_000_000} depth={500_000_000_000} count={5000} factor={4} />
+      <SunBody />
       <Suspense fallback={null}><Earth /></Suspense>
       <MoonBody />
       <MarsBody />
