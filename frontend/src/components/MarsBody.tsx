@@ -2,9 +2,9 @@ import { Vector3 } from 'three';
 import { MARS_RADIUS } from '../lib/bodies';
 import { TexturedPlanet } from './TexturedPlanet';
 
-interface Props { position: Vector3 }
+interface Props { position: Vector3; containsCentroid: boolean; }
 
-export function MarsBody({ position }: Props) {
+export function MarsBody({ position, containsCentroid }: Props) {
   return (
     <TexturedPlanet
       texturePath="/mars.jpg"
@@ -12,6 +12,8 @@ export function MarsBody({ position }: Props) {
       position={[position.x, position.y, position.z]}
       roughness={0.9}
       fallbackColor="#c1440e"
+      rotationSpeed={0.08}
+      containsCentroid={containsCentroid}
     />
   );
 }

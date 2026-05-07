@@ -1,17 +1,21 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Vector3 } from 'three';
-import type { Group, MeshStandardMaterial } from 'three';
+import type { Group, MeshBasicMaterial } from 'three';
 
-const FADE_START = 150_000_000; // 150 Mm — camera distance where indicator begins to appear
-const FADE_END = 3_000_000_000; // 3 Gm — fully visible beyond this distance
+// Thresholds derived from Earth's angular size at distance:
+//   FADE_NEAR ≈ dist where Earth spans ~9 px (clearly a body, not a dot)
+//   FADE_FAR  ≈ dist where Earth spans ~2 px (just a point, indicator needed)
+const FADE_NEAR = 2_000_000_000; // 2 Gm
+const FADE_FAR  = 8_000_000_000; // 8 Gm
+
 const ANGULAR_SIZE = 0.008;
 
 interface Props { position: Vector3 }
 
 export function EarthIndicator({ position }: Props) {
   const groupRef = useRef<Group>(null);
-  const matRef = useRef<MeshStandardMaterial>(null);
+  const matRef = useRef<MeshBasicMaterial>(null);
   const posRef = useRef(position);
   posRef.current = position;
 
@@ -19,8 +23,10 @@ export function EarthIndicator({ position }: Props) {
     if (!groupRef.current || !matRef.current) return;
 
     const dist = camera.position.distanceTo(posRef.current);
-    const t = (dist - FADE_START) / (FADE_END - FADE_START);
-    matRef.current.emissiveIntensity = Math.max(0, Math.min(1, t));
+    const t = (dist - FADE_NEAR) / (FADE_FAR - FADE_NEAR);
+    const intensity = Math.max(0, Math.min(1, t));
+    matRef.current.opacity = intensity;
+    groupRef.current.visible = intensity > 0;
 
     const radius = ANGULAR_SIZE * dist;
     const pulse = 1 + 0.1 * Math.sin(clock.elapsedTime * 1.5);
@@ -28,16 +34,16 @@ export function EarthIndicator({ position }: Props) {
   });
 
   return (
-    <group ref={groupRef} position={[position.x, position.y, position.z]} renderOrder={10}>
+    <group ref={groupRef} position={[position.x, position.y, position.z]}>
       <mesh frustumCulled={false}>
         <sphereGeometry args={[1, 16, 16]} />
-        <meshStandardMaterial
+        <meshBasicMaterial
           ref={matRef}
-          color="#000000"
-          emissive="#3b82f6"
-          emissiveIntensity={0}
+          color="#3b82f6"
           toneMapped={false}
-          depthTest={false}
+          transparent
+          opacity={0}
+          depthTest={true}
           depthWrite={false}
         />
       </mesh>

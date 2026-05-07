@@ -11,7 +11,7 @@ import { LightLagSphere } from './LightLagSphere';
 import { MoonBody } from './MoonBody';
 import { MarsBody } from './MarsBody';
 import { SunBody } from './SunBody';
-import { EARTH_RADIUS, SUN_RADIUS } from '../lib/bodies';
+import { EARTH_RADIUS, MOON_RADIUS, MARS_RADIUS, SUN_RADIUS } from '../lib/bodies';
 import { computeScale, type ScaleInfo } from './ScaleBar';
 import type { PlanetaryPositions } from '../lib/ephemeris';
 import type { Centroid } from '../types';
@@ -298,6 +298,16 @@ export function Scene({ centroid, autoOrbit, jumpTarget, onJumpComplete, onScale
     new Vector3(positions.earth.x, positions.earth.y + 20_000_000, positions.earth.z)
   );
 
+  const centroidInEarth = centroid
+    ? new Vector3(centroid.x, centroid.y, centroid.z).distanceTo(positions.earth) < EARTH_RADIUS
+    : false;
+  const centroidInMoon = centroid
+    ? new Vector3(centroid.x, centroid.y, centroid.z).distanceTo(positions.moon) < MOON_RADIUS
+    : false;
+  const centroidInMars = centroid
+    ? new Vector3(centroid.x, centroid.y, centroid.z).distanceTo(positions.mars) < MARS_RADIUS
+    : false;
+
   return (
     <Canvas
       camera={{
@@ -310,24 +320,15 @@ export function Scene({ centroid, autoOrbit, jumpTarget, onJumpComplete, onScale
     >
       <color attach="background" args={['#000000']} />
       <ambientLight intensity={0.1} />
-      {/* Directional light FROM the Sun (origin) toward Earth.
-          Direction = normalize(target - position) = normalize(0 - (-earth)) = earth.normalize()
-          Surfaces facing the Sun (toward origin) are lit correctly. */}
-      <directionalLight
-        position={[-positions.earth.x, -positions.earth.y, -positions.earth.z]}
-        intensity={2.5}
-        color="#fff8e7"
-      />
+      {/* Point light at the Sun (scene origin). Per-fragment direction is computed from
+          each surface point to the Sun, so every planet is lit from the correct side
+          regardless of its orbital position. decay=0 disables inverse-square falloff. */}
+      <pointLight position={[0, 0, 0]} intensity={2.5} color="#fff8e7" decay={0} />
       <Stars radius={1_500_000_000_000} depth={500_000_000_000} count={5000} factor={4} />
       <SunBody position={positions.sun} />
-      <Suspense fallback={null}><Earth position={positions.earth} /></Suspense>
-      <MoonBody position={positions.moon} />
-      <MarsBody position={positions.mars} />
-      {centroid && <LightLagSphere centroid={centroid} />}
-      <EarthIndicator position={positions.earth} />
-      <MoonIndicator position={positions.moon} />
-      <MarsIndicator position={positions.mars} />
-      {centroid && <CentroidPoint centroid={centroid} />}
+      <Suspense fallback={null}><Earth position={positions.earth} containsCentroid={centroidInEarth} /></Suspense>
+      <MoonBody position={positions.moon} containsCentroid={centroidInMoon} />
+      <MarsBody position={positions.mars} containsCentroid={centroidInMars} />
       <CameraRig
         autoOrbit={autoOrbit}
         jumpTarget={jumpTarget}
@@ -337,6 +338,11 @@ export function Scene({ centroid, autoOrbit, jumpTarget, onJumpComplete, onScale
         positions={positions}
         anchorBody={anchorBody}
       />
+      {centroid && <LightLagSphere centroid={centroid} />}
+      <EarthIndicator position={positions.earth} />
+      <MoonIndicator position={positions.moon} />
+      <MarsIndicator position={positions.mars} />
+      {centroid && <CentroidPoint centroid={centroid} />}
     </Canvas>
   );
 }

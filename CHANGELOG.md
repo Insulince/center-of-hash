@@ -1,5 +1,15 @@
 # CHANGELOG
 
+### v0.5.0 - 7 May 2026
+- **Centroid-inside-planet UX**: when the hashrate centroid falls inside a planet, that planet fades to 60% opacity and gains a Fresnel rim glow in Bitcoin orange (#F7931A); both effects fade in/out smoothly (~1 s exponential ease) as the centroid enters and exits; render order is managed so the centroid indicator is correctly dimmed by the translucent planet rather than rendering on top
+- **Indicator render order fixed**: all indicators (Earth, Moon, Mars) and the centroid point now use `transparent` materials so Three.js back-to-front sorts them automatically; indicators are occluded by planets (`depthTest=true`); per-planet fade thresholds tuned so each indicator appears only when its body is too small to see clearly (Moon: 500 Mm–2 Gm, Earth: 2–8 Gm, Mars: 1–4 Gm)
+- **LightLagSphere depth**: sphere is now occluded by opaque planets instead of rendering on top of them
+- **Sunlight fix**: replaced `directionalLight` with a `pointLight` at the Sun origin (`decay=0`); each planet is now lit from the correct side regardless of its orbital position, fixing the wrong-side illumination observed on Mars
+- **Planet rotation**: Earth, Moon, and Mars now rotate slowly on their axes (purely visual)
+- **Planets made solid**: removed translucency from all planets; they are now fully opaque except when the centroid is inside them
+- **Indicators unlit**: switched indicator materials from `meshStandardMaterial` to `meshBasicMaterial` so they are not affected by the point light and maintain constant color from any angle
+- **Centroid color**: centroid indicator and glow halo both updated to official Bitcoin orange (#F7931A)
+
 ### v0.4.0 - 6 May 2026, 4:01 PM
 - **UI polish**: navigation overlay redesigned as a glass card (backdrop-blur) with colored body-dot indicators and the auto-orbit toggle folded into its header; eliminated duplicate "Hashrate Distribution" section title (country panel renamed "Mining by Country"); "What is this?" info block condensed; sidebar gap tightened
 - **Mobile layout**: sidebar hidden on small screens; full-screen canvas on mobile with a floating "☰ Data" FAB that opens an iOS-style bottom sheet (slide-up drawer, backdrop dismiss, drag handle) containing all data and controls; header subtitle and external link hidden on mobile; footer padding and hint text compressed to reclaim vertical space; touch targets enlarged in the navigation overlay

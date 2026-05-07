@@ -63,7 +63,7 @@ export function LightLagSphere({ centroid }: Props) {
         transparent
         side={DoubleSide}
         depthWrite={false}
-        depthTest={false}
+        depthTest={true}
       />
     </mesh>
   );

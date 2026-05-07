@@ -2,9 +2,9 @@ import { Vector3 } from 'three';
 import { MOON_RADIUS } from '../lib/bodies';
 import { TexturedPlanet } from './TexturedPlanet';
 
-interface Props { position: Vector3 }
+interface Props { position: Vector3; containsCentroid: boolean; }
 
-export function MoonBody({ position }: Props) {
+export function MoonBody({ position, containsCentroid }: Props) {
   return (
     <TexturedPlanet
       texturePath="/moon.jpg"
@@ -12,6 +12,8 @@ export function MoonBody({ position }: Props) {
       position={[position.x, position.y, position.z]}
       roughness={0.95}
       fallbackColor="#a0a0a0"
+      rotationSpeed={0.02}
+      containsCentroid={containsCentroid}
     />
   );
 }

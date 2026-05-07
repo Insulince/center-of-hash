@@ -9,10 +9,10 @@ interface Props {
   color?: string;
 }
 
-const ANGULAR_SIZE = 0.01;
-const MIN_RADIUS = 150_000; // 150 km floor when camera is very close
+const ANGULAR_SIZE = 0.006;
+const MIN_RADIUS = 100_000; // 100 km floor when camera is very close
 
-export function CentroidPoint({ centroid, color = '#f97316' }: Props) {
+export function CentroidPoint({ centroid, color = '#F7931A' }: Props) {
   const groupRef = useRef<Group>(null);
   const centroidRef = useRef(centroid);
   centroidRef.current = centroid;
@@ -29,15 +29,16 @@ export function CentroidPoint({ centroid, color = '#f97316' }: Props) {
   });
 
   return (
-    <group ref={groupRef} position={[centroid.x, centroid.y, centroid.z]} renderOrder={20}>
-      <mesh frustumCulled={false}>
+    <group ref={groupRef} position={[centroid.x, centroid.y, centroid.z]}>
+      <mesh frustumCulled={false} renderOrder={1}>
         <sphereGeometry args={[1, 16, 16]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
           emissiveIntensity={2}
           toneMapped={false}
-          depthTest={false}
+          transparent
+          depthTest={true}
           depthWrite={false}
         />
       </mesh>
