@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Scene, type JumpTarget } from './components/Scene';
 import { SceneOverlay, type AnchorTarget } from './components/SceneOverlay';
+import { BodyStatusPanel, type BodyStatuses } from './components/BodyStatusPanel';
 import { TimeSlider } from './components/TimeSlider';
 import { HashPanel } from './components/HashPanel';
 import { SpaceMiners, type SpaceMinersConfig, DEFAULT_SPACE_MINERS } from './components/HypotheticalMiner';
@@ -8,9 +9,11 @@ import { ScaleBar, type ScaleBarHandle, type ScaleInfo } from './components/Scal
 import { SimDateControls } from './components/SimDateControls';
 import { useSnapshots } from './hooks/useSnapshots';
 import { usePlanetaryPositions } from './hooks/usePlanetaryPositions';
+import { LIGHT_LAG_RADIUS } from './components/LightLagSphere';
 import { latLonToECEF } from './lib/ecef';
 import { weightedCentroid, type Miner } from './lib/centroid';
 import { countryLatLon } from './lib/countries';
+import { Vector3 } from 'three';
 import type { Snapshot } from './types/index';
 import './index.css';
 
@@ -103,6 +106,22 @@ export default function App() {
     return weightedCentroid(miners);
   })();
 
+  const bodyStatuses: BodyStatuses | null = effectiveCentroid
+    ? (() => {
+        const cv = new Vector3(effectiveCentroid.x, effectiveCentroid.y, effectiveCentroid.z);
+        const status = (v: Vector3) => {
+          const d = v.distanceTo(cv);
+          return { distanceToCentroid: d, inLightSphere: d < LIGHT_LAG_RADIUS };
+        };
+        return {
+          earth: status(positions.earth),
+          moon:  status(positions.moon),
+          mars:  status(positions.mars),
+          sun:   status(positions.sun),
+        };
+      })()
+    : null;
+
   return (
     <div className="h-screen w-screen bg-slate-950 text-white flex flex-col">
 
@@ -152,13 +171,21 @@ export default function App() {
             </>
           )}
           {!loading && !error && (
-            <SceneOverlay
-              autoOrbit={autoOrbit}
-              onToggleAutoOrbit={() => setAutoOrbit((v) => !v)}
-              onJumpTo={(t) => setJumpTarget(t)}
-              anchorTarget={anchorTarget}
-              onAnchor={setAnchorTarget}
-            />
+            <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+              <SceneOverlay
+                autoOrbit={autoOrbit}
+                onToggleAutoOrbit={() => setAutoOrbit((v) => !v)}
+                onJumpTo={(t) => setJumpTarget(t)}
+                anchorTarget={anchorTarget}
+                onAnchor={setAnchorTarget}
+              />
+              {bodyStatuses && (
+                <BodyStatusPanel
+                  bodyStatuses={bodyStatuses}
+                  spaceMiners={spaceMiners}
+                />
+              )}
+            </div>
           )}
 
           {/* Mobile FAB — opens the bottom sheet */}

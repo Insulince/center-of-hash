@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### v0.6.0 - 7 May 2026
+- **Light-Lag Sphere status panel**: dedicated overlay card below the navigation panel showing, for each body (Earth, Moon, Mars, Sun), its hash share, distance from the hashrate centroid, and whether it falls inside or outside the light-lag sphere; "Inside"/"Outside" labels carry a hover tooltip with the margin to the sphere edge and a one-line practical implication for miners there
+- **ⓘ tooltip**: the panel header includes an info icon that explains what the light-lag sphere is in plain English; clicking the icon locks the tooltip open until the user clicks anywhere else on the page
+- **UI polish**: increased internal padding on both overlay panels; screen-edge offset bumped from 12 px to 16 px; navigation panel rows tightened
+
 ### v0.5.0 - 7 May 2026
 - **Centroid-inside-planet UX**: when the hashrate centroid falls inside a planet, that planet fades to 60% opacity and gains a Fresnel rim glow in Bitcoin orange (#F7931A); both effects fade in/out smoothly (~1 s exponential ease) as the centroid enters and exits; render order is managed so the centroid indicator is correctly dimmed by the translucent planet rather than rendering on top
 - **Indicator render order fixed**: all indicators (Earth, Moon, Mars) and the centroid point now use `transparent` materials so Three.js back-to-front sorts them automatically; indicators are occluded by planets (`depthTest=true`); per-planet fade thresholds tuned so each indicator appears only when its body is too small to see clearly (Moon: 500 Mm–2 Gm, Earth: 2–8 Gm, Mars: 1–4 Gm)
